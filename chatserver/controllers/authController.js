@@ -1,41 +1,84 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const generateToken = require("../utils/generateToken");
 
+const JWT_SECRET = "hzM48lH2sIo5lyt9RKYljQROmp9BRR3LTwfGooJhjg0IvaOktcufjG8P/gWJkxrx+YHO3afLEN0N/Woxufe7aw=="; // TEMP hardcoded
+
 exports.register = async (req, res) => {
-  const { username, email, password } = req.body;
-
   try {
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: "Email already exists" });
+    const { username, email, password, role } = req.body;
 
-    const hashed = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, email, password: hashed });
+    const existingUser = await User.findOne({ email });
+    if (existingUser)
+      return res.status(400).json({ message: "Email already registered." });
 
-    const token = generateToken(user);
-    res
-      .cookie("token", token, { httpOnly: true })
-      .json({ user: { email: user.email, username: user.username } });
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      role: role || "user",
+      status: "pending",
+    });
+
+    await newUser.save();
+
+    res.status(201).json({
+      user: {
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        status: newUser.status,
+      },
+    });
   } catch (err) {
-    res.status(500).json({ message: "Registration failed" });
+    console.error("Registration Error:", err);
+    res.status(500).json({ message: "Server error during registration" });
   }
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    const user = await User.findOne({ email: email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    const { email, password } = req.body;
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ message: "Invalid credentials" });
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(400).json({ message: "Invalid email or password" });
 
-    const token = generateToken(user);
-    res
-      .cookie("token", token, { httpOnly: true })
-      .json({ user: { email: user.email, username: user.username } });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Invalid email or password" });
+
+    if (user.status !== "active") {
+      return res
+        .status(403)
+        .json({ message: `Account ${user.status}. Please contact support.` });
+    }
+
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false, // You're in development
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      user: {
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        status: user.status,
+      },
+      token,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Login failed" });
+    console.error("Login Error:", err);
+    res.status(500).json({ message: "Server error during login" });
   }
 };
