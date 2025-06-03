@@ -52,7 +52,7 @@ function UserForm() {
         ? { username, email, password }
         : { email, password };
 
-      const { data } = await axios.post(`${'http://localhost:5000'}${endpoint}`, payload, {
+      const { data } = await axios.post(`${API_URL}${endpoint}`, payload, {
         withCredentials: true,
       });
 
