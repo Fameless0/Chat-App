@@ -12,20 +12,28 @@ const { Server } = require("socket.io");
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
-    credentials: true
-  }
+    origin: 'http://localhost:5173',
+    credentials: true,
+  },
 });
 
-connectDB();
+if (!process.env.CLIENT_URL) {
+  console.warn("⚠️ Warning: CLIENT_URL is not set in .env");
+}
 
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+connectDB().catch((err) => {
+  console.error("MongoDB connection failed:", err.message);
+  process.exit(1);
+});
+
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 
 app.use("/api", authRoutes);
 
-require("./sockets")(io);
+require("./sockets/socket")(io);
+app.set("io", io);
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

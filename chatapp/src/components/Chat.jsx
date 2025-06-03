@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import socket from "../Socket";
+import Socket from "../Socket";
 
 export default function Chat({ to }) {
   const [msg, setMsg] = useState("");
@@ -9,16 +9,16 @@ export default function Chat({ to }) {
     const handleReceive = (data) => {
       setMessages(prev => [...prev, `${data.from}: ${data.message}`]);
     };
-    socket.on("receive-message", handleReceive);
+    Socket.on("receive-message", handleReceive);
 
     return () => {
-      socket.off("receive-message", handleReceive);
+      Socket.off("receive-message", handleReceive);
     };
   }, []);
 
   const sendMessage = () => {
     if (!msg.trim()) return;
-    socket.emit("send-message", { message: msg, to });
+    Socket.emit("send-message", { message: msg, to });
     setMessages(prev => [...prev, `Me: ${msg}`]);
     setMsg("");
   };

@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { io } from "socket.io-client";
-import { FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash } from "react-icons/fa";
+import Socket from "../Socket";
+import {
+  FaEnvelope,
+  FaLock,
+  FaUser,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
 
-const socket = io("http://192.168.31.34:5000", { autoConnect: false });
-
+const API_URL = import.meta.env.VITE_API_URL;
+const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 function UserForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [username, setUsername] = useState("");
@@ -15,10 +21,10 @@ function UserForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState("");
+  const [role, setRole] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [role, setRole] = useState("");
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -44,20 +50,20 @@ function UserForm() {
       const endpoint = isSignUp ? "/api/register" : "/api/login";
       const payload = isSignUp
         ? { username, email, password }
-        : { username: email, password };
+        : { email, password };
 
-      const { data } = await axios.post(
-        `http://192.168.31.34:5000${endpoint}`,
-        payload,
-        { withCredentials: true }
-      );
+      const { data } = await axios.post(`${'http://localhost:5000'}${endpoint}`, payload, {
+        withCredentials: true,
+      });
 
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      if (!socket.connected) socket.connect();
-      socket.on("connect", () => {
-        socket.emit("join", data.user.email);
-      });
+      if (!Socket.connected) {
+        Socket.connect();
+        Socket.once("connect", () => {
+          Socket.emit("join", data.user.email);
+        });
+      }
 
       navigate("/chat");
     } catch (err) {
@@ -82,11 +88,10 @@ function UserForm() {
         className="relative overflow-hidden rounded-3xl max-w-md w-full shadow-2xl bg-white/10 backdrop-blur p-6 transition-all duration-[600ms]"
         style={{ height: isSignUp ? 470 : 440 }}
       >
-
-        {/* Sliding container: width is double, side-by-side forms */}
         <div
-          className={`flex w-[200%] h-full transition-transform duration-500 ease-in-out ${isSignUp ? "-translate-x-1/2" : "translate-x-0"
-            }`}
+          className={`flex w-[200%] h-full transition-transform duration-500 ease-in-out ${
+            isSignUp ? "-translate-x-1/2" : "translate-x-0"
+          }`}
           style={{ minWidth: "800px", maxWidth: "100%" }}
         >
           {/* Sign In Form */}
@@ -102,8 +107,11 @@ function UserForm() {
               <FaEnvelope className="absolute top-3 left-3 text-gray-500" />
               <input
                 type="email"
-                className={`${inputBase} ${!email && focusedField === "email" ? inputInvalid : "border-gray-300"
-                  }`}
+                className={`${inputBase} ${
+                  !email && focusedField === "email"
+                    ? inputInvalid
+                    : "border-gray-300"
+                }`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onFocus={() => setFocusedField("email")}
@@ -111,8 +119,11 @@ function UserForm() {
                 required
               />
               <label
-                className={`${labelBase} ${focusedField === "email" || email ? floatLabel : defaultLabel
-                  }`}
+                className={`${labelBase} ${
+                  focusedField === "email" || email
+                    ? floatLabel
+                    : defaultLabel
+                }`}
               >
                 Email
               </label>
@@ -122,10 +133,11 @@ function UserForm() {
               <FaLock className="absolute top-3 left-3 text-gray-500" />
               <input
                 type={showPass ? "text" : "password"}
-                className={`${inputBase} ${!password && focusedField === "password"
+                className={`${inputBase} ${
+                  !password && focusedField === "password"
                     ? inputInvalid
                     : "border-gray-300"
-                  }`}
+                }`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={() => setFocusedField("password")}
@@ -133,8 +145,11 @@ function UserForm() {
                 required
               />
               <label
-                className={`${labelBase} ${focusedField === "password" || password ? floatLabel : defaultLabel
-                  }`}
+                className={`${labelBase} ${
+                  focusedField === "password" || password
+                    ? floatLabel
+                    : defaultLabel
+                }`}
               >
                 Password
               </label>
@@ -147,7 +162,9 @@ function UserForm() {
               </button>
             </div>
 
-            {error && <p className="text-sm text-red-300 text-center">{error}</p>}
+            {error && (
+              <p className="text-sm text-red-300 text-center">{error}</p>
+            )}
 
             <button
               type="submit"
@@ -182,10 +199,11 @@ function UserForm() {
               <FaUser className="absolute top-3 left-3 text-gray-500" />
               <input
                 type="text"
-                className={`${inputBase} ${!username && focusedField === "username"
+                className={`${inputBase} ${
+                  !username && focusedField === "username"
                     ? inputInvalid
                     : "border-gray-300"
-                  }`}
+                }`}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onFocus={() => setFocusedField("username")}
@@ -193,8 +211,11 @@ function UserForm() {
                 required
               />
               <label
-                className={`${labelBase} ${focusedField === "username" || username ? floatLabel : defaultLabel
-                  }`}
+                className={`${labelBase} ${
+                  focusedField === "username" || username
+                    ? floatLabel
+                    : defaultLabel
+                }`}
               >
                 Username
               </label>
@@ -204,8 +225,11 @@ function UserForm() {
               <FaEnvelope className="absolute top-3 left-3 text-gray-500" />
               <input
                 type="email"
-                className={`${inputBase} ${!email && focusedField === "email" ? inputInvalid : "border-gray-300"
-                  }`}
+                className={`${inputBase} ${
+                  !email && focusedField === "email"
+                    ? inputInvalid
+                    : "border-gray-300"
+                }`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onFocus={() => setFocusedField("email")}
@@ -213,8 +237,11 @@ function UserForm() {
                 required
               />
               <label
-                className={`${labelBase} ${focusedField === "email" || email ? floatLabel : defaultLabel
-                  }`}
+                className={`${labelBase} ${
+                  focusedField === "email" || email
+                    ? floatLabel
+                    : defaultLabel
+                }`}
               >
                 Email
               </label>
@@ -224,10 +251,11 @@ function UserForm() {
               <FaLock className="absolute top-3 left-3 text-gray-500" />
               <input
                 type={showPass ? "text" : "password"}
-                className={`${inputBase} ${!password && focusedField === "password"
+                className={`${inputBase} ${
+                  !password && focusedField === "password"
                     ? inputInvalid
                     : "border-gray-300"
-                  }`}
+                }`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={() => setFocusedField("password")}
@@ -235,8 +263,11 @@ function UserForm() {
                 required
               />
               <label
-                className={`${labelBase} ${focusedField === "password" || password ? floatLabel : defaultLabel
-                  }`}
+                className={`${labelBase} ${
+                  focusedField === "password" || password
+                    ? floatLabel
+                    : defaultLabel
+                }`}
               >
                 Password
               </label>
@@ -249,7 +280,9 @@ function UserForm() {
               </button>
             </div>
 
-            {error && <p className="text-sm text-red-300 text-center">{error}</p>}
+            {error && (
+              <p className="text-sm text-red-300 text-center">{error}</p>
+            )}
 
             <button
               type="submit"

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import socket from "../Socket";
+import Socket from "../Socket";
 
 export default function VideoCall({ to }) {
   const localVideo = useRef();
@@ -12,7 +12,7 @@ export default function VideoCall({ to }) {
       await pc.current.setRemoteDescription(new RTCSessionDescription(offer));
       const answer = await pc.current.createAnswer();
       await pc.current.setLocalDescription(answer);
-      socket.emit("answer", { answer, to: from });
+      Socket.emit("answer", { answer, to: from });
     };
 
     const handleAnswer = ({ answer }) => {
@@ -23,14 +23,14 @@ export default function VideoCall({ to }) {
       pc.current?.addIceCandidate(new RTCIceCandidate(candidate));
     };
 
-    socket.on("offer", handleOffer);
-    socket.on("answer", handleAnswer);
-    socket.on("ice-candidate", handleCandidate);
+    Socket.on("offer", handleOffer);
+    Socket.on("answer", handleAnswer);
+    Socket.on("ice-candidate", handleCandidate);
 
     return () => {
-      socket.off("offer", handleOffer);
-      socket.off("answer", handleAnswer);
-      socket.off("ice-candidate", handleCandidate);
+      Socket.off("offer", handleOffer);
+      Socket.off("answer", handleAnswer);
+      Socket.off("ice-candidate", handleCandidate);
     };
   }, []);
 
@@ -39,7 +39,7 @@ export default function VideoCall({ to }) {
 
     peer.onicecandidate = (event) => {
       if (event.candidate) {
-        socket.emit("ice-candidate", { candidate: event.candidate, to: targetId });
+        Socket.emit("ice-candidate", { candidate: event.candidate, to: targetId });
       }
     };
 
@@ -61,7 +61,7 @@ export default function VideoCall({ to }) {
 
     const offer = await pc.current.createOffer();
     await pc.current.setLocalDescription(offer);
-    socket.emit("offer", { offer, to });
+    Socket.emit("offer", { offer, to });
   };
 
   return (
