@@ -1,67 +1,29 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import UserForm from "./components/UserForm";
-import Sidebar from "./components/Sidebar";
+import { useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Chat from "./components/Chat";
-import VideoCall from "./components/VideoCall";
-import socket from "./Socket";
+import UserForm from "./components/UserForm";
 
-function ChatLayout({ users, selfId, selectedUser, setSelectedUser }) {
-  return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar users={users} selfId={selfId} onSelectUser={setSelectedUser} />
-      <div className="flex-1 p-4">
-        <Chat to={selectedUser} />
-        <VideoCall to={selectedUser} />
-      </div>
-    </div>
-  );
-}
-
-function App() {
-  const [users, setUsers] = useState({});
-  const [selfId, setSelfId] = useState("");
-  const [selectedUser, setSelectedUser] = useState(null);
-
-  useEffect(() => {
-    const handleUsers = (data) => setUsers(data);
-    const handleSelfId = (id) => setSelfId(id);
-
-    socket.on("users", handleUsers);
-    socket.on("self-id", handleSelfId);
-
-    return () => {
-      socket.off("users", handleUsers);
-      socket.off("self-id", handleSelfId);
-    };
-  }, []);
-
+export default function App() {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    }
+  }, [user, navigate]);
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<UserForm />} />
-        <Route path="/login" element={<UserForm />} />
-        <Route path="/register" element={<UserForm />} />
-        <Route
-          path="/chat"
-          element={
-            user ? (
-              <ChatLayout
-                users={users}
-                selfId={selfId}
-                selectedUser={selectedUser}
-                setSelectedUser={setSelectedUser}
-              />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/login" element={<UserForm />} />
+      <Route
+        path="/chat"
+        element={user ? <Chat to="admin@example.com" /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="*"
+        element={<Navigate to={user ? "/chat" : "/login"} replace />}
+      />
+    </Routes>
   );
 }
-
-export default App;
