@@ -58,17 +58,31 @@ export default function Chat({ to }) {
   };
 
   return (
-    <div className='bg-gradient-to-r from-[#200122] to-[#6f0000]'>
-    <div className="flex h-screen">
+    <div className='bg-gradient-to-r from-[#200122] to-[#6f0000] h-screen w-screen overflow-hidden flex'>
+      {!isSidebarOpen && (
+        <button
+          onClick={toggleSidebar}
+          className="fixed top-4 left-4 z-50 bg-gray-800 p-2 rounded text-white hover:bg-gray-700"
+          title="Open Sidebar"
+        >
+          <FaBars />
+        </button>
+      )}
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      <div className="flex-1 flex flex-col relative">
-        <header className="flex items-center justify-between bg-white bg-opacity-10 p-4 shadow">
-          <button onClick={toggleSidebar} className="text-gray-700">
+
+
+      <div
+        className={`flex flex-col transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-16'
+          } w-full`}
+      >
+        {/* Header */}
+        <header className="flex items-center justify-between bg-white bg-opacity-10 p-4 shadow transition-all duration-300 rounded-full">
+          {/* <button onClick={toggleSidebar} className="text-white">
             <FaBars />
-          </button>
-          <h1 className="text-xl font-bold">Chat Room</h1>
+          </button> */}
+          <h1 className="text-xl font-bold text-white">Chat Room</h1>
           <button
-            className="text-gray-700 text-xl"
+            className="text-white text-xl"
             onClick={handleVideoCallClick}
             title="Start Video Call"
           >
@@ -76,6 +90,7 @@ export default function Chat({ to }) {
           </button>
         </header>
 
+        {/* Main chat area */}
         <main className="flex-1 overflow-y-auto p-4">
           <div className="space-y-4">
             {messages.map((m, i) => (
@@ -84,11 +99,10 @@ export default function Chat({ to }) {
                 className={`flex ${m.self ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-xs p-3 rounded-lg text-sm ${
-                    m.self
+                  className={`max-w-xs p-3 rounded-lg text-sm ${m.self
                       ? 'bg-blue-500 text-white rounded-br-none'
                       : 'bg-gray-200 text-gray-800 rounded-bl-none'
-                  }`}
+                    }`}
                 >
                   <p className="font-semibold">{m.self ? 'You' : m.from}</p>
                   <p>{m.message}</p>
@@ -104,7 +118,8 @@ export default function Chat({ to }) {
           </div>
         </main>
 
-        <footer className="p-4 bg-white bg-opacity-10 flex items-center space-x-2">
+        {/* Footer */}
+        <footer className="p-4 bg-white bg-opacity-10 flex items-center space-x-2 rounded-full">
           <input
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
@@ -113,13 +128,13 @@ export default function Chat({ to }) {
           />
           <button
             onClick={sendMessage}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition rounded-full"
           >
             Send
           </button>
         </footer>
 
-        {/* Video Call Modal (simple version) */}
+        {/* Video Call Modal */}
         {isVideoOpen && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded p-4 w-full max-w-xl shadow-xl relative">
@@ -130,13 +145,11 @@ export default function Chat({ to }) {
                 ✖
               </button>
               <h2 className="text-xl font-semibold mb-2">Video Chat</h2>
-              {/* You can integrate your VideoCall component here */}
               <p>Video screen goes here...</p>
             </div>
           </div>
         )}
       </div>
-    </div>
     </div>
   );
 }
