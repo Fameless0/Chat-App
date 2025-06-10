@@ -51,9 +51,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         }`}
       >
         {/* Left Nav Icons */}
-        <div className="w-16 bg-gray-800 flex flex-col items-center py-4 space-y-4 relative">
+        <div className="w-16 bg-gray-800 flex flex-col items-center py-10 space-y-4 relative">
           {/* FaTimes to close */}
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-4 left-5">
             <button
               onClick={toggleSidebar}
               className="text-white hover:text-gray-400"
@@ -63,7 +63,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             </button>
           </div>
 
-          <div className="mt-8 space-y-4">
+          <div className="mt-10 space-y-4">
             <IconButton
               icon={<FaUserFriends />}
               label="Global Users"

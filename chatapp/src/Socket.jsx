@@ -1,10 +1,20 @@
-// src/socket.js
+// socket.js
 import { io } from "socket.io-client";
 
-// Access the environment variable using import.meta.env in Vite
-const socket = io(import.meta.env.VITE_API_URL, {
-  autoConnect: false,
+const Socket = io(import.meta.env.VITE_SOCKET_URL, {
+  transports: ['websocket'],
   withCredentials: true,
+  autoConnect: false, // Important: Prevent auto connection before login
 });
 
-export default socket;
+export const connectAndRegisterUser = (userIdOrEmail) => {
+  if (!Socket.connected) {
+    Socket.connect();
+  }
+
+  Socket.once("connect", () => {
+    Socket.emit("register-user", userIdOrEmail);
+  });
+};
+
+export default Socket;

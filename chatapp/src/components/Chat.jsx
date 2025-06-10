@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Socket from '../Socket';
 import { FaBars, FaVideo } from 'react-icons/fa';
+import { connectAndRegisterUser } from "../Socket";
 
 export default function Chat({ to }) {
   const [msg, setMsg] = useState('');
@@ -12,6 +13,9 @@ export default function Chat({ to }) {
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
+    if (user?._id) {
+      connectAndRegisterUser(user._id);
+    }
     const handleReceive = (data) => {
       setMessages((prev) => [
         ...prev,
@@ -100,8 +104,8 @@ export default function Chat({ to }) {
               >
                 <div
                   className={`max-w-xs p-3 rounded-lg text-sm ${m.self
-                      ? 'bg-blue-500 text-white rounded-br-none'
-                      : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                    ? 'bg-blue-500 text-white rounded-br-none'
+                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
                     }`}
                 >
                   <p className="font-semibold">{m.self ? 'You' : m.from}</p>

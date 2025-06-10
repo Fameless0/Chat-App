@@ -2,10 +2,10 @@ require("dotenv").config();
 const { Server } = require("socket.io");
 const Message = require("../models/Message");
 
-const allowedOrigins = [
-  process.env.CLIENT_LOCAL,
-  process.env.CLIENT_URL,
-];
+const allowedOrigins = [process.env.CLIENT_LOCAL, process.env.CLIENT_URL];
+
+// Global map: userId (ObjectId as string) → socket.id
+const connectedUsers = new Map();
 
 const initSocket = (httpServer) => {
   const io = new Server(httpServer, {
@@ -21,32 +21,60 @@ const initSocket = (httpServer) => {
     },
   });
 
-  const users = {};
-
   io.on("connection", (socket) => {
-    console.log("User connected");
+    console.log("🔌 New socket connected:", socket.id);
 
-    socket.on("join", (email) => {
-      users[socket.id] = email;
-      socket.join(email);
-      console.log(`User ${email} joined`);
-      io.emit("users", users);
-      socket.emit("self-id", socket.id);
+    // Step 1: Register the user
+    socket.on("register-user", (userId) => {
+      if (!userId) return;
+      connectedUsers.set(userId, socket.id);
+      socket.userId = userId; // Save on socket instance
+      console.log(`✅ Registered user ${userId} with socket ${socket.id}`);
+
+      // Broadcast online users
+      io.emit("online-users", Array.from(connectedUsers.keys()));
     });
 
-    socket.on("message", async ({ sender, content }) => {
+    // Step 2: Handle chat messages
+    socket.on("send-message", async ({ sender, receiver, content }) => {
       try {
-        const msg = await Message.create({ sender, content });
-        io.emit("message", msg);
-      } catch (err) {
-        console.error("Error saving message:", err.message);
+        const message = await Message.create({ sender, receiver, content });
+
+        // Send to receiver if online
+        const receiverSocketId = connectedUsers.get(receiver);
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("receive-message", message);
+        }
+
+        // Confirm to sender
+        socket.emit("message-sent", message);
+      } catch (error) {
+        console.error("❌ Message DB error:", error.message);
       }
     });
 
+    // Step 3: Handle WebRTC signaling
+    socket.on("video-signal", ({ to, signalData }) => {
+      const targetSocket = connectedUsers.get(to);
+      if (targetSocket) {
+        io.to(targetSocket).emit("video-signal", {
+          from: socket.userId,
+          signalData,
+        });
+      }
+    });
+
+    // Step 4: Handle disconnect
     socket.on("disconnect", () => {
-      console.log("User disconnected");
-      delete users[socket.id];
-      io.emit("users", users);
+      console.log(`❌ Socket disconnected: ${socket.id}`);
+
+      // Remove the user from the connectedUsers map
+      if (socket.userId) {
+        connectedUsers.delete(socket.userId);
+        console.log(`🚪 User ${socket.userId} disconnected`);
+      }
+
+      io.emit("online-users", Array.from(connectedUsers.keys()));
     });
   });
 };

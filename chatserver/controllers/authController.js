@@ -5,6 +5,16 @@ const generateToken = require("../utils/generateToken");
 
 const JWT_SECRET = "hzM48lH2sIo5lyt9RKYljQROmp9BRR3LTwfGooJhjg0IvaOktcufjG8P/gWJkxrx+YHO3afLEN0N/Woxufe7aw=="; // TEMP hardcoded
 
+exports.user = async (req, res) => {
+  try {
+    const users = await User.find({}, "_id username email");
+    res.json(users);
+  } catch (err) {
+    console.error("Fetch users error:", err);
+    res.status(500).json({ message: "Failed to get users" });
+  }
+};
+
 exports.register = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;

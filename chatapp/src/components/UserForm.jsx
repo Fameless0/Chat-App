@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import Socket from "../Socket";
+import { connectAndRegisterUser } from "../Socket";
 import {
   FaEnvelope,
   FaLock,
@@ -58,12 +58,7 @@ function UserForm() {
 
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      if (!Socket.connected) {
-        Socket.connect();
-        Socket.once("connect", () => {
-          Socket.emit("join", data.user.email);
-        });
-      }
+      connectAndRegisterUser(data.user._id);
 
       navigate("/chat");
     } catch (err) {
@@ -83,6 +78,7 @@ function UserForm() {
   const defaultLabel = "top-2.5 translate-y-0 text-gray-400";
 
   return (
+    
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#200122] to-[#6f0000] px-4">
       <div
         className="relative overflow-hidden rounded-3xl max-w-md w-full shadow-2xl bg-white/10 backdrop-blur p-6 transition-all duration-[600ms]"
